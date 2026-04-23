@@ -61,7 +61,7 @@
             flex-direction: column;
         }
 
-        /* --- Refined Minimal & Premium Landing Page --- */
+        /* --- Minimal Premium Landing Page --- */
         #view-landing {
             flex: 1;
             display: flex;
@@ -73,65 +73,36 @@
             background-color: var(--bg-card);
             background-image: radial-gradient(var(--dot-color) 0.8px, transparent 0.8px);
             background-size: 20px 20px;
-            animation: premiumEntrance 1s cubic-bezier(0.22, 1, 0.36, 1);
-            position: relative;
-        }
-
-        @keyframes premiumEntrance {
-            from { opacity: 0; transform: scale(0.98); }
-            to { opacity: 1; transform: scale(1); }
+            animation: fadeIn 0.6s ease-out;
         }
 
         .landing-card {
             width: 100%;
             max-width: 320px;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 50px 30px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 60px 20px;
             border-radius: 40px;
-            border: 1px solid rgba(235, 182, 182, 0.3);
-            box-shadow: 0 20px 40px rgba(107, 91, 91, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(107, 91, 91, 0.1);
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        .landing-logo-wrapper {
-            position: relative;
-            margin-bottom: 30px;
-        }
-
-        .landing-logo-wrapper::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 120px;
-            height: 120px;
-            background: radial-gradient(circle, rgba(235, 182, 182, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
-            z-index: -1;
-            animation: pulseGlow 3s infinite ease-in-out;
-        }
-
-        @keyframes pulseGlow {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
-            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
-        }
-
         .landing-logo-box {
-            width: 90px; 
-            height: 90px; 
-            background-color: #FFFFFF;
-            border: 1px solid var(--pink-main); 
-            border-radius: 24px;
+            width: 100px; 
+            height: 100px; 
+            background-color: #FFF;
+            border: 1px solid var(--border-color); 
+            border-radius: 30px;
             display: flex; 
             align-items: center; 
             justify-content: center; 
             overflow: hidden;
-            box-shadow: 0 8px 20px rgba(235, 182, 182, 0.2);
-            transition: transform 0.5s ease;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 20px rgba(107, 91, 91, 0.05);
         }
 
         .landing-logo-box img { 
@@ -141,46 +112,45 @@
         }
 
         .landing-title {
-            font-size: 1.6rem;
+            font-size: 1.7rem;
             font-weight: 500;
             color: var(--pink-main);
-            letter-spacing: 1px;
-            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
         }
 
         .landing-subtitle {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--brown-muted);
-            margin-bottom: 40px;
+            margin-bottom: 50px;
             font-weight: 300;
-            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .landing-btn {
             background-color: var(--pink-main);
             color: #FFFFFF;
             border: none;
-            padding: 16px 40px;
+            padding: 18px 45px;
             border-radius: 100px;
             font-family: 'Kanit', sans-serif;
             font-size: 0.95rem;
             font-weight: 400;
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 25px rgba(235, 182, 182, 0.4);
-            letter-spacing: 0.5px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 20px rgba(235, 182, 182, 0.3);
         }
 
         .landing-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 30px rgba(235, 182, 182, 0.5);
-            background-color: #efc2c2;
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px rgba(235, 182, 182, 0.4);
+            filter: brightness(1.05);
         }
 
         .landing-btn:active {
-            transform: translateY(-1px) scale(0.98);
+            transform: translateY(0) scale(0.98);
         }
-        /* ------------------------------------------------------ */
 
         #app-interface {
             display: none;
@@ -305,7 +275,7 @@
         .modal-box { background-color: var(--bg-card); padding: 35px 30px; border-radius: 24px; width: 88%; max-width: 340px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.12); }
         .modal-box h3 { font-size: 1.25rem; margin-bottom: 12px; }
 
-        #loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-page); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-page); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s ease; }
         .loader { width: 45px; height: 45px; border: 4px solid var(--pink-light); border-top: 4px solid var(--pink-main); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
@@ -359,16 +329,14 @@
 </div>
 
 <div class="app-container">
-    <!-- Refined Minimal & Premium Landing Page -->
+    <!-- Refined Minimal Premium Landing Page -->
     <main id="view-landing" class="view-section active">
         <div class="landing-card">
-            <div class="landing-logo-wrapper">
-                <div class="landing-logo-box">
-                    <img src="logo.png" alt="Logo">
-                </div>
+            <div class="landing-logo-box">
+                <img src="logo.png" alt="Logo">
             </div>
             <h1 class="landing-title">Premie Studio</h1>
-            <p class="landing-subtitle">ระบบจัดการคิวออนไลน์</p>
+            <p class="landing-subtitle">Online Queue System</p>
             <button class="landing-btn" onclick="enterApp()">เข้าเพื่อเช็คคิว</button>
         </div>
     </main>
@@ -483,11 +451,28 @@
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const firebaseConfig = JSON.parse(__firebase_config);
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    // --- Firebase Logic & Failsafe ---
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'premie-studio-queue';
+    let db, auth;
+    
+    const hideLoader = () => {
+        const loader = document.getElementById('loading-overlay');
+        if(loader) loader.style.opacity = '0';
+        setTimeout(() => { if(loader) loader.style.display = 'none'; }, 400);
+    };
+
+    // Failsafe: หากโหลดนานเกิน 4 วินาที ให้ปิดหน้าหมุนอัตโนมัติ
+    setTimeout(hideLoader, 4000);
+
+    try {
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+    } catch (e) {
+        console.error("Firebase init failed:", e);
+        hideLoader();
+    }
 
     let state = {
         isLoggedIn: false,
@@ -497,15 +482,8 @@
         adminCreds: { user: 'admin', pass: '1234' }
     };
 
-    const queuesCol = collection(db, 'artifacts', appId, 'public', 'data', 'queues');
-    const settingsCol = collection(db, 'artifacts', appId, 'public', 'data', 'settings');
-
-    const hideLoader = () => {
-        const loader = document.getElementById('loading-overlay');
-        if(loader) loader.style.display = 'none';
-    };
-
     const initAuth = async () => {
+        if (!auth) return;
         try {
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                 await signInWithCustomToken(auth, __initial_auth_token);
@@ -518,16 +496,22 @@
         }
     };
 
-    onAuthStateChanged(auth, (user) => {
-        state.user = user;
-        if (user) {
-            startListeners();
-        } else {
-            hideLoader();
-        }
-    });
+    if (auth) {
+        onAuthStateChanged(auth, (user) => {
+            state.user = user;
+            if (user) {
+                startListeners();
+            } else {
+                hideLoader();
+            }
+        });
+    }
 
     const startListeners = () => {
+        if (!db) return;
+        const queuesCol = collection(db, 'artifacts', appId, 'public', 'data', 'queues');
+        const settingsCol = collection(db, 'artifacts', appId, 'public', 'data', 'settings');
+
         let isFirstQueuesLoad = true;
         onSnapshot(queuesCol, (snapshot) => {
             state.queues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
@@ -666,14 +650,61 @@
     };
 
     window.handleLogout = () => { state.isLoggedIn = false; document.getElementById('login-section').style.display = 'block'; document.getElementById('dashboard-section').style.display = 'none'; };
-    window.updateNote = async () => { const text = document.getElementById('admin-studio-note').value; await setDoc(doc(settingsCol, 'studioNote'), { text }); showToast("อัปเดตประกาศเรียบร้อยแล้ว"); };
-    window.updateAdminCreds = async () => { const user = document.getElementById('edit-admin-user').value; const pass = document.getElementById('edit-admin-pass').value; if(!user || !pass) return showToast("กรุณากรอกข้อมูลให้ครบถ้วน"); await setDoc(doc(settingsCol, 'adminAuth'), { user, pass }); showToast("เปลี่ยนข้อมูลบัญชีสำเร็จ!"); };
-    window.addQueue = async () => { const name = document.getElementById('new-q-name').value; const detail = document.getElementById('new-q-detail').value; const platform = document.getElementById('new-q-platform').value; if(!name || !detail) return showToast("กรุณากรอกชื่อและรายละเอียด"); const lastNum = state.queues.length > 0 ? Math.max(...state.queues.map(q => parseInt(q.queueNum) || 0)) : 0; await addDoc(queuesCol, { name, platform, detail, status: 'waiting', queueNum: lastNum + 1, createdAt: serverTimestamp() }); document.getElementById('new-q-name').value = ""; document.getElementById('new-q-detail').value = ""; showToast("เพิ่มคิวเข้าสู่ระบบแล้ว"); };
-    window.setStatus = async (id, status) => { if (status === 'serving') { for (const q of state.queues) { if (q.status === 'serving') await updateDoc(doc(queuesCol, q.id), { status: 'waiting' }); } } await updateDoc(doc(queuesCol, id), { status }); };
+    window.updateNote = async () => { 
+        if (!db) return;
+        const settingsCol = collection(db, 'artifacts', appId, 'public', 'data', 'settings');
+        const text = document.getElementById('admin-studio-note').value; 
+        await setDoc(doc(settingsCol, 'studioNote'), { text }); 
+        showToast("อัปเดตประกาศเรียบร้อยแล้ว"); 
+    };
+    
+    window.updateAdminCreds = async () => { 
+        if (!db) return;
+        const settingsCol = collection(db, 'artifacts', appId, 'public', 'data', 'settings');
+        const user = document.getElementById('edit-admin-user').value; 
+        const pass = document.getElementById('edit-admin-pass').value; 
+        if(!user || !pass) return showToast("กรุณากรอกข้อมูลให้ครบถ้วน"); 
+        await setDoc(doc(settingsCol, 'adminAuth'), { user, pass }); 
+        showToast("เปลี่ยนข้อมูลบัญชีสำเร็จ!"); 
+    };
+    
+    window.addQueue = async () => { 
+        if (!db) return;
+        const queuesCol = collection(db, 'artifacts', appId, 'public', 'data', 'queues');
+        const name = document.getElementById('new-q-name').value; 
+        const detail = document.getElementById('new-q-detail').value; 
+        const platform = document.getElementById('new-q-platform').value; 
+        if(!name || !detail) return showToast("กรุณากรอกชื่อและรายละเอียด"); 
+        const lastNum = state.queues.length > 0 ? Math.max(...state.queues.map(q => parseInt(q.queueNum) || 0)) : 0; 
+        await addDoc(queuesCol, { name, platform, detail, status: 'waiting', queueNum: lastNum + 1, createdAt: serverTimestamp() }); 
+        document.getElementById('new-q-name').value = ""; 
+        document.getElementById('new-q-detail').value = ""; 
+        showToast("เพิ่มคิวเข้าสู่ระบบแล้ว"); 
+    };
+    
+    window.setStatus = async (id, status) => { 
+        if (!db) return;
+        const queuesCol = collection(db, 'artifacts', appId, 'public', 'data', 'queues');
+        if (status === 'serving') { 
+            for (const q of state.queues) { 
+                if (q.status === 'serving') await updateDoc(doc(queuesCol, q.id), { status: 'waiting' }); 
+            } 
+        } 
+        await updateDoc(doc(queuesCol, id), { status }); 
+    };
     
     let idToDelete = null;
     window.deleteQueue = (id) => { idToDelete = id; document.getElementById('confirm-modal').style.display = 'flex'; };
-    window.confirmDelete = async () => { if (idToDelete) { await deleteDoc(doc(queuesCol, idToDelete)); idToDelete = null; document.getElementById('confirm-modal').style.display = 'none'; showToast("ลบรายการคิวแล้ว"); } };
+    window.confirmDelete = async () => { 
+        if (!db) return;
+        const queuesCol = collection(db, 'artifacts', appId, 'public', 'data', 'queues');
+        if (idToDelete) { 
+            await deleteDoc(doc(queuesCol, idToDelete)); 
+            idToDelete = null; 
+            document.getElementById('confirm-modal').style.display = 'none'; 
+            showToast("ลบรายการคิวแล้ว"); 
+        } 
+    };
     window.cancelDelete = () => { document.getElementById('confirm-modal').style.display = 'none'; };
     
     window.notifyShop = () => showToast("ทักแชททางร้านเพื่อสอบถามได้เลยค่ะ", true);
