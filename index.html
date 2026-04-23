@@ -329,7 +329,6 @@
 </div>
 
 <div class="app-container">
-    <!-- Refined Minimal Premium Landing Page -->
     <main id="view-landing" class="view-section active">
         <div class="landing-card">
             <div class="landing-logo-box">
@@ -451,7 +450,7 @@
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // --- Firebase Logic & Failsafe ---
+    // --- Configuration ---
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'premie-studio-queue';
     let db, auth;
     
@@ -474,12 +473,16 @@
         hideLoader();
     }
 
+    // --- Global Collection References ---
+    const queuesCol = db ? collection(db, 'artifacts', appId, 'public', 'data', 'queues') : null;
+    const settingsCol = db ? collection(db, 'artifacts', appId, 'public', 'data', 'settings') : null;
+
     let state = {
         isLoggedIn: false,
         studioNote: "",
         queues: [],
         user: null,
-        adminCreds: { user: 'admin', pass: '1234' }
+        adminCreds: { user: 'admin', pass: '1234' } // Default if Firestore doc doesn't exist
     };
 
     const initAuth = async () => {
@@ -508,11 +511,10 @@
     }
 
     const startListeners = () => {
-        if (!db) return;
-        const queuesCol = collection(db, 'artifacts', appId, 'public', 'data', 'queues');
-        const settingsCol = collection(db, 'artifacts', appId, 'public', 'data', 'settings');
+        if (!db || !queuesCol || !settingsCol) return;
 
         let isFirstQueuesLoad = true;
+        // Listener for Queues
         onSnapshot(queuesCol, (snapshot) => {
             state.queues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
                 .sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
@@ -521,17 +523,32 @@
                 isFirstQueuesLoad = false;
                 hideLoader();
             }
-        }, (error) => {
-            console.error("Firestore error:", error);
+        }, (err) => {
+            console.error("Queues snapshot error:", err);
             hideLoader();
         });
 
-        onSnapshot(doc(settingsCol, 'studioNote'), (doc) => {
-            if (doc.exists()) { state.studioNote = doc.data().text; render(); }
-        });
-        onSnapshot(doc(settingsCol, 'adminAuth'), (doc) => {
-            if (doc.exists()) { state.adminCreds = doc.data(); }
-        });
+        // Listener for Studio Note
+        onSnapshot(doc(settingsCol, 'studioNote'), (snapshot) => {
+            if (snapshot.exists()) { 
+                state.studioNote = snapshot.data().text; 
+                render(); 
+            }
+        }, (err) => console.error("Note snapshot error:", err));
+
+        // Listener for Admin Credentials
+        onSnapshot(doc(settingsCol, 'adminAuth'), (snapshot) => {
+            if (snapshot.exists()) { 
+                state.adminCreds = snapshot.data(); 
+                // Pre-fill fields if user is in dashboard
+                if (state.isLoggedIn) {
+                    const uField = document.getElementById('edit-admin-user');
+                    const pField = document.getElementById('edit-admin-pass');
+                    if (uField && !uField.value) uField.value = state.adminCreds.user;
+                    if (pField && !pField.value) pField.value = state.adminCreds.pass;
+                }
+            }
+        }, (err) => console.error("AdminAuth snapshot error:", err));
     };
 
     window.enterApp = () => {
@@ -637,6 +654,7 @@
         container.innerHTML = state.queues.map(q => `<div class="queue-card" style="background:#FFF; flex-direction:column; align-items:stretch; gap:12px;"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="q-name">คิว ${q.queueNum}: ${q.name}</div><div class="text ${q.status}" style="font-size: 0.75rem; text-transform: capitalize;">${q.status}</div></div><div style="display:flex; gap:8px;">${q.status === 'waiting' ? `<button class="btn" style="padding:10px; font-size:0.8rem; flex:1;" onclick="setStatus('${q.id}', 'serving')">เริ่มทำ</button>` : ''}${q.status === 'serving' ? `<button class="btn" style="padding:10px; font-size:0.8rem; background:#A3C1A3; flex:1;" onclick="setStatus('${q.id}', 'completed')">ส่งงาน</button>` : ''}<button class="btn" style="padding:10px; font-size:0.8rem; background:#E6B8B8; flex:1;" onclick="deleteQueue('${q.id}')">ลบ</button></div></div>`).join('');
     };
 
+    // --- Admin Actions ---
     window.handleLogin = () => {
         const u = document.getElementById('login-user').value;
         const p = document.getElementById('login-pass').value;
@@ -649,60 +667,84 @@
         } else showToast("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     };
 
-    window.handleLogout = () => { state.isLoggedIn = false; document.getElementById('login-section').style.display = 'block'; document.getElementById('dashboard-section').style.display = 'none'; };
+    window.handleLogout = () => { 
+        state.isLoggedIn = false; 
+        document.getElementById('login-section').style.display = 'block'; 
+        document.getElementById('dashboard-section').style.display = 'none'; 
+    };
+
     window.updateNote = async () => { 
-        if (!db) return;
-        const settingsCol = collection(db, 'artifacts', appId, 'public', 'data', 'settings');
+        if (!db || !settingsCol) return;
         const text = document.getElementById('admin-studio-note').value; 
-        await setDoc(doc(settingsCol, 'studioNote'), { text }); 
-        showToast("อัปเดตประกาศเรียบร้อยแล้ว"); 
+        try {
+            await setDoc(doc(settingsCol, 'studioNote'), { text }); 
+            showToast("อัปเดตประกาศเรียบร้อยแล้ว"); 
+        } catch (err) {
+            console.error(err);
+            showToast("ไม่สามารถอัปเดตประกาศได้");
+        }
     };
     
+    // --- Fixed Change Username & Password Logic ---
     window.updateAdminCreds = async () => { 
-        if (!db) return;
-        const settingsCol = collection(db, 'artifacts', appId, 'public', 'data', 'settings');
-        const user = document.getElementById('edit-admin-user').value; 
-        const pass = document.getElementById('edit-admin-pass').value; 
-        if(!user || !pass) return showToast("กรุณากรอกข้อมูลให้ครบถ้วน"); 
-        await setDoc(doc(settingsCol, 'adminAuth'), { user, pass }); 
-        showToast("เปลี่ยนข้อมูลบัญชีสำเร็จ!"); 
+        if (!db || !settingsCol) return;
+        const newU = document.getElementById('edit-admin-user').value.trim(); 
+        const newP = document.getElementById('edit-admin-pass').value.trim(); 
+        
+        if(!newU || !newP) return showToast("กรุณากรอกข้อมูลให้ครบถ้วน"); 
+        
+        try {
+            // Update Firestore
+            await setDoc(doc(settingsCol, 'adminAuth'), { user: newU, pass: newP }); 
+            // Local state will be updated by onSnapshot automatically
+            showToast("เปลี่ยนข้อมูลบัญชีสำเร็จ!"); 
+            
+            // Re-render to ensure everything is in sync
+            render();
+        } catch (err) {
+            console.error("Update admin creds error:", err);
+            showToast("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+        }
     };
     
     window.addQueue = async () => { 
-        if (!db) return;
-        const queuesCol = collection(db, 'artifacts', appId, 'public', 'data', 'queues');
+        if (!db || !queuesCol) return;
         const name = document.getElementById('new-q-name').value; 
         const detail = document.getElementById('new-q-detail').value; 
         const platform = document.getElementById('new-q-platform').value; 
         if(!name || !detail) return showToast("กรุณากรอกชื่อและรายละเอียด"); 
         const lastNum = state.queues.length > 0 ? Math.max(...state.queues.map(q => parseInt(q.queueNum) || 0)) : 0; 
-        await addDoc(queuesCol, { name, platform, detail, status: 'waiting', queueNum: lastNum + 1, createdAt: serverTimestamp() }); 
-        document.getElementById('new-q-name').value = ""; 
-        document.getElementById('new-q-detail').value = ""; 
-        showToast("เพิ่มคิวเข้าสู่ระบบแล้ว"); 
+        try {
+            await addDoc(queuesCol, { name, platform, detail, status: 'waiting', queueNum: lastNum + 1, createdAt: serverTimestamp() }); 
+            document.getElementById('new-q-name').value = ""; 
+            document.getElementById('new-q-detail').value = ""; 
+            showToast("เพิ่มคิวเข้าสู่ระบบแล้ว"); 
+        } catch (err) { console.error(err); showToast("ไม่สามารถเพิ่มคิวได้"); }
     };
     
     window.setStatus = async (id, status) => { 
-        if (!db) return;
-        const queuesCol = collection(db, 'artifacts', appId, 'public', 'data', 'queues');
-        if (status === 'serving') { 
-            for (const q of state.queues) { 
-                if (q.status === 'serving') await updateDoc(doc(queuesCol, q.id), { status: 'waiting' }); 
+        if (!db || !queuesCol) return;
+        try {
+            if (status === 'serving') { 
+                for (const q of state.queues) { 
+                    if (q.status === 'serving') await updateDoc(doc(queuesCol, q.id), { status: 'waiting' }); 
+                } 
             } 
-        } 
-        await updateDoc(doc(queuesCol, id), { status }); 
+            await updateDoc(doc(queuesCol, id), { status }); 
+        } catch (err) { console.error(err); }
     };
     
     let idToDelete = null;
     window.deleteQueue = (id) => { idToDelete = id; document.getElementById('confirm-modal').style.display = 'flex'; };
     window.confirmDelete = async () => { 
-        if (!db) return;
-        const queuesCol = collection(db, 'artifacts', appId, 'public', 'data', 'queues');
+        if (!db || !queuesCol) return;
         if (idToDelete) { 
-            await deleteDoc(doc(queuesCol, idToDelete)); 
-            idToDelete = null; 
-            document.getElementById('confirm-modal').style.display = 'none'; 
-            showToast("ลบรายการคิวแล้ว"); 
+            try {
+                await deleteDoc(doc(queuesCol, idToDelete)); 
+                idToDelete = null; 
+                document.getElementById('confirm-modal').style.display = 'none'; 
+                showToast("ลบรายการคิวแล้ว"); 
+            } catch (err) { console.error(err); showToast("ไม่สามารถลบคิวได้"); }
         } 
     };
     window.cancelDelete = () => { document.getElementById('confirm-modal').style.display = 'none'; };
