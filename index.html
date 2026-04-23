@@ -450,8 +450,24 @@
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // --- Configuration ---
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'premie-studio-queue';
+    // ========================================================
+    // 🚩 [CONFIGURATION ZONE] - ข้อมูลที่เชื่อมกับโปรเจกต์ของคุณ
+    // ========================================================
+    const MY_FIREBASE_CONFIG = {
+        apiKey: "AIzaSyDRqwddQu1DAO-nnzAc9v5UtTWU-IVc6Fg",
+        authDomain: "premie-checkq.firebaseapp.com",
+        projectId: "premie-checkq",
+        storageBucket: "premie-checkq.firebasestorage.app",
+        messagingSenderId: "376846635369",
+        appId: "1:376846635369:web:a8af8a084b06d5f4d86df8"
+    };
+
+    const MY_APP_ID = "premie-checkq"; // ปรับให้ตรงกับ Project ID ของคุณ
+    // ========================================================
+
+    const firebaseConfig = (typeof __firebase_config !== 'undefined') ? JSON.parse(__firebase_config) : MY_FIREBASE_CONFIG;
+    const appId = (typeof __app_id !== 'undefined') ? __app_id : MY_APP_ID;
+
     let db, auth;
     
     const hideLoader = () => {
@@ -460,11 +476,10 @@
         setTimeout(() => { if(loader) loader.style.display = 'none'; }, 400);
     };
 
-    // Failsafe: หากโหลดนานเกิน 4 วินาที ให้ปิดหน้าหมุนอัตโนมัติ
+    // Failsafe 4 วินาที
     setTimeout(hideLoader, 4000);
 
     try {
-        const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
@@ -473,16 +488,15 @@
         hideLoader();
     }
 
-    // --- Global Collection References ---
-    const queuesCol = db ? collection(db, 'artifacts', appId, 'public', 'data', 'queues') : null;
-    const settingsCol = db ? collection(db, 'artifacts', appId, 'public', 'data', 'settings') : null;
+    const queuesColPath = `artifacts/${appId}/public/data/queues`;
+    const settingsColPath = `artifacts/${appId}/public/data/settings`;
 
     let state = {
         isLoggedIn: false,
         studioNote: "",
         queues: [],
         user: null,
-        adminCreds: { user: 'admin', pass: '1234' } // Default if Firestore doc doesn't exist
+        adminCreds: { user: 'admin', pass: '1234' }
     };
 
     const initAuth = async () => {
@@ -506,16 +520,16 @@
                 startListeners();
             } else {
                 hideLoader();
+                initAuth();
             }
         });
     }
 
     const startListeners = () => {
-        if (!db || !queuesCol || !settingsCol) return;
+        if (!db) return;
 
         let isFirstQueuesLoad = true;
-        // Listener for Queues
-        onSnapshot(queuesCol, (snapshot) => {
+        onSnapshot(collection(db, queuesColPath), (snapshot) => {
             state.queues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
                 .sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
             render();
@@ -528,19 +542,16 @@
             hideLoader();
         });
 
-        // Listener for Studio Note
-        onSnapshot(doc(settingsCol, 'studioNote'), (snapshot) => {
+        onSnapshot(doc(db, settingsColPath, 'studioNote'), (snapshot) => {
             if (snapshot.exists()) { 
                 state.studioNote = snapshot.data().text; 
                 render(); 
             }
         }, (err) => console.error("Note snapshot error:", err));
 
-        // Listener for Admin Credentials
-        onSnapshot(doc(settingsCol, 'adminAuth'), (snapshot) => {
+        onSnapshot(doc(db, settingsColPath, 'adminAuth'), (snapshot) => {
             if (snapshot.exists()) { 
                 state.adminCreds = snapshot.data(); 
-                // Pre-fill fields if user is in dashboard
                 if (state.isLoggedIn) {
                     const uField = document.getElementById('edit-admin-user');
                     const pField = document.getElementById('edit-admin-pass');
@@ -654,7 +665,6 @@
         container.innerHTML = state.queues.map(q => `<div class="queue-card" style="background:#FFF; flex-direction:column; align-items:stretch; gap:12px;"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="q-name">คิว ${q.queueNum}: ${q.name}</div><div class="text ${q.status}" style="font-size: 0.75rem; text-transform: capitalize;">${q.status}</div></div><div style="display:flex; gap:8px;">${q.status === 'waiting' ? `<button class="btn" style="padding:10px; font-size:0.8rem; flex:1;" onclick="setStatus('${q.id}', 'serving')">เริ่มทำ</button>` : ''}${q.status === 'serving' ? `<button class="btn" style="padding:10px; font-size:0.8rem; background:#A3C1A3; flex:1;" onclick="setStatus('${q.id}', 'completed')">ส่งงาน</button>` : ''}<button class="btn" style="padding:10px; font-size:0.8rem; background:#E6B8B8; flex:1;" onclick="deleteQueue('${q.id}')">ลบ</button></div></div>`).join('');
     };
 
-    // --- Admin Actions ---
     window.handleLogin = () => {
         const u = document.getElementById('login-user').value;
         const p = document.getElementById('login-pass').value;
@@ -674,48 +684,41 @@
     };
 
     window.updateNote = async () => { 
-        if (!db || !settingsCol) return;
+        if (!db) return;
         const text = document.getElementById('admin-studio-note').value; 
         try {
-            await setDoc(doc(settingsCol, 'studioNote'), { text }); 
+            await setDoc(doc(db, settingsColPath, 'studioNote'), { text }); 
             showToast("อัปเดตประกาศเรียบร้อยแล้ว"); 
         } catch (err) {
             console.error(err);
-            showToast("ไม่สามารถอัปเดตประกาศได้");
+            showToast("ไม่สามารถอัปเดตได้ (เช็ค Config)");
         }
     };
     
-    // --- Fixed Change Username & Password Logic ---
     window.updateAdminCreds = async () => { 
-        if (!db || !settingsCol) return;
+        if (!db) return;
         const newU = document.getElementById('edit-admin-user').value.trim(); 
         const newP = document.getElementById('edit-admin-pass').value.trim(); 
-        
         if(!newU || !newP) return showToast("กรุณากรอกข้อมูลให้ครบถ้วน"); 
-        
         try {
-            // Update Firestore
-            await setDoc(doc(settingsCol, 'adminAuth'), { user: newU, pass: newP }); 
-            // Local state will be updated by onSnapshot automatically
+            await setDoc(doc(db, settingsColPath, 'adminAuth'), { user: newU, pass: newP }); 
             showToast("เปลี่ยนข้อมูลบัญชีสำเร็จ!"); 
-            
-            // Re-render to ensure everything is in sync
             render();
         } catch (err) {
-            console.error("Update admin creds error:", err);
-            showToast("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+            console.error("Update admin error:", err);
+            showToast("เกิดข้อผิดพลาด (เช็ค Rules)");
         }
     };
     
     window.addQueue = async () => { 
-        if (!db || !queuesCol) return;
+        if (!db) return;
         const name = document.getElementById('new-q-name').value; 
         const detail = document.getElementById('new-q-detail').value; 
         const platform = document.getElementById('new-q-platform').value; 
         if(!name || !detail) return showToast("กรุณากรอกชื่อและรายละเอียด"); 
         const lastNum = state.queues.length > 0 ? Math.max(...state.queues.map(q => parseInt(q.queueNum) || 0)) : 0; 
         try {
-            await addDoc(queuesCol, { name, platform, detail, status: 'waiting', queueNum: lastNum + 1, createdAt: serverTimestamp() }); 
+            await addDoc(collection(db, queuesColPath), { name, platform, detail, status: 'waiting', queueNum: lastNum + 1, createdAt: serverTimestamp() }); 
             document.getElementById('new-q-name').value = ""; 
             document.getElementById('new-q-detail').value = ""; 
             showToast("เพิ่มคิวเข้าสู่ระบบแล้ว"); 
@@ -723,24 +726,24 @@
     };
     
     window.setStatus = async (id, status) => { 
-        if (!db || !queuesCol) return;
+        if (!db) return;
         try {
             if (status === 'serving') { 
                 for (const q of state.queues) { 
-                    if (q.status === 'serving') await updateDoc(doc(queuesCol, q.id), { status: 'waiting' }); 
+                    if (q.status === 'serving') await updateDoc(doc(db, queuesColPath, q.id), { status: 'waiting' }); 
                 } 
             } 
-            await updateDoc(doc(queuesCol, id), { status }); 
+            await updateDoc(doc(db, queuesColPath, id), { status }); 
         } catch (err) { console.error(err); }
     };
     
     let idToDelete = null;
     window.deleteQueue = (id) => { idToDelete = id; document.getElementById('confirm-modal').style.display = 'flex'; };
     window.confirmDelete = async () => { 
-        if (!db || !queuesCol) return;
+        if (!db) return;
         if (idToDelete) { 
             try {
-                await deleteDoc(doc(queuesCol, idToDelete)); 
+                await deleteDoc(doc(db, queuesColPath, idToDelete)); 
                 idToDelete = null; 
                 document.getElementById('confirm-modal').style.display = 'none'; 
                 showToast("ลบรายการคิวแล้ว"); 
